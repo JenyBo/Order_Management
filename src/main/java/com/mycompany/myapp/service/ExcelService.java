@@ -15,7 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +24,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class ExcelService {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+
+    private final Logger log = LoggerFactory.getLogger(ExcelService.class);
+
+    public ExcelService(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
 
     public List<Order> importOrdersFromExcel(MultipartFile file) {
         List<Order> orders = new ArrayList<>();
@@ -46,7 +52,7 @@ public class ExcelService {
                 orderRepository.save(order);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Failed to import orders from Excel: " + e.getMessage());
             // Handle exception
         }
         return orders;
@@ -106,7 +112,7 @@ public class ExcelService {
 
             return ResponseEntity.ok().header("Content-Disposition", "attachment; filename=orders.xlsx").body(excelBytes);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("Failed to export orders to Excel: " + e.getMessage());
             return ResponseEntity.badRequest().body(("Export failed: " + e.getMessage()).getBytes());
         }
     }
